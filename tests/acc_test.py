@@ -10,7 +10,8 @@ py_path = os.path.join(os.path.dirname(__file__), "../python-hll/python-hll-simp
 
 '''
 For a given list of text paths, counts the number of total and unique tokens in the file.
-Returns two dicts, ground_truth holds the cardinalities and lengths holds the total token counts.
+Returns two dicts, ground_truth holds the cardinalities and lengths holds the total token counts, both
+keyed by the paths.
 '''
 def parse_files(texts):
     ground_truth = {}
@@ -29,18 +30,28 @@ def parse_files(texts):
     return ground_truth, lengths
 
 '''
-Runs accuracy test for a given command by spinning up a subprocess, capturing the output,
-and comparing it to the ground truth cardinality.
+Estimates cardinality. Command must print out its cardinality guess, which is captured and converted
+into an int. Also times subprocess.
 '''
-def acc_test(command, card):
+def estimate(command):
     t0 = time.time()
     estimator = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     guess = estimator.communicate()[0].decode(encoding).rstrip()
     t1 = time.time()
-    error = int(guess) / card - 1
     t = t1-t0
+    return int(guess), t
+
+'''
+Compares estimate to the ground truth cardinality.
+'''
+def acc_test(command, card):
+    guess, t = estimate(command)
+    error = guess / card - 1
     return error, t
 
+'''
+Pretty print of results of accuracy test error/time results for a given program prog (e.g. Go, Python, etc.)
+'''
 def print_acc_test(prog, error, t):
     print("{}:\t".format(prog) + "Error: {:.2%}".format(error) + "\t" + "Time: {:.2f} seconds".format(t))
 
@@ -55,14 +66,16 @@ def test_redis(txt_path, gt):
     redis.kill()
 
 '''
-Runs acc_test for Go, iterating over possible bucket sizes to test
-hyperparamter response.
+Runs acc_test for Go
 '''
 def test_go(txt_path, gt):
     command = ["go", "run", go_path, str(10), txt_path]
     error, t = acc_test(command, gt[txt_path])
     print_acc_test("Go", error, t)
 
+'''
+Runs acc_test for Python.
+'''
 def test_py(txt_path, gt):
     command = ["python3", py_path, txt_path, str(13), str(5)] 
     error, t = acc_test(command, gt[txt_path])

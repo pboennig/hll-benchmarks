@@ -1,3 +1,6 @@
+/* File: go_parse.go
+ * Script that returns unique tokens in file from argv[1].
+ */
 package main
 
 import ("fmt"

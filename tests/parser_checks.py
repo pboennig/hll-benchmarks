@@ -1,3 +1,6 @@
+'''
+Tests whether Python and Go parsers are equivalent.
+'''
 import shlex, subprocess
 import os
 import time

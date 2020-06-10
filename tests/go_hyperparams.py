@@ -9,6 +9,7 @@ import time
 import subprocess
 import acc_test
 
+# hyperparameters for Go
 M_MIN = 4
 M_MAX = 16
 
@@ -21,19 +22,12 @@ py_path = os.path.join(os.path.dirname(__file__), "../python-hll/python-hll-simp
 gt, _ = acc_test.parse_files(texts)
 
 res = np.zeros((len(texts),M_MAX - M_MIN + 1, 2))
-def estimate(command):
-    t0 = time.time()
-    estimator = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-    guess = estimator.communicate()[0].decode(encoding).rstrip()
-    t1 = time.time()
-    t = t1-t0
-    return int(guess), t
 
 for i in range(len(texts)):
     f = list(gt.keys())[i]
     for m in range(M_MIN, M_MAX+1):
         command = ["go", "run", go_path, str(m), f]
-        res[i][m - M_MIN] = estimate(command)
+        res[i][m - M_MIN] = acc_test.estimate(command)
 
 np.save("go_plots/go_plots.npy", res)
 

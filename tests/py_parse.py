@@ -1,3 +1,6 @@
+'''
+Returns number of unique tokens in file from argv[1]
+'''
 import sys
 import csv
 
