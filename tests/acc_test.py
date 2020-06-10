@@ -2,7 +2,7 @@ import shlex, subprocess
 import os
 import time
 
-texts = ["../text/ulysses.txt", "../text/war_and_peace.txt"]
+texts = ["../text/ulysses.csv", "../text/war_and_peace.csv"]
 encoding = "utf-8"
 script_path = os.path.join(os.path.dirname(__file__), "../redis-hll/redis-hll.py")
 go_path = os.path.join(os.path.dirname(__file__), "../go-hll/go-hll.go")
@@ -20,9 +20,9 @@ def parse_files(texts):
         length = 0
         with open(path, "r") as f:
             for l in f: 
-                tok = l.split()
-                uniq.update(tok)
-                length += len(tok)
+                uniq.add(l)
+                length += 1 
+
         ground_truth[path] = len(uniq)
         lengths[path] = length
     return ground_truth, lengths

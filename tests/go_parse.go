@@ -1,23 +1,20 @@
 package main
 
 import ("fmt"
-        "bufio"
-        "strings"
         "os"
+        "bufio"
     )
 
 func main(){
-        file, _ := os.Open(os.Args[1])
         uniq := make(map[string]int)
-        scanner := bufio.NewScanner(file)
+        f, _ := os.Open(os.Args[1])
+        defer f.Close()
+
+        scanner := bufio.NewScanner(f)
         for scanner.Scan() {
-            line := scanner.Text()
-            for _, word := range strings.Fields(line) {
-                if uniq[word] == 0  {
-                    uniq[word] = 1
-                } else {
-                    uniq[word]++
-                }
+            token := scanner.Text()
+            if uniq[token] == 0 {
+                uniq[token] = 1
             }
         }
         fmt.Println(len(uniq))

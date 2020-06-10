@@ -1,6 +1,7 @@
 import redis
 import sys
 import argparse
+import nltk
 
 parser = argparse.ArgumentParser(description='Estimate unique words in text file(s)')
 parser.add_argument('files', metavar='F', type=str, nargs='+', help="list of files")
@@ -11,10 +12,8 @@ r.flushdb() # new estimate each time
 
 for file in a.files:
     f = open(file, "r")
-    for l in f:
-        words = l.split()
-        for word in words:
-            r.pfadd("hll", word) 
+    for token in f: 
+        r.pfadd("hll", token)
 
 estimate = r.pfcount("hll")
 print(estimate) 

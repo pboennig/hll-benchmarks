@@ -4,7 +4,7 @@ import time
 
 go_parse = "go_parse.go"
 py_parse = "py_parse.py"
-texts = ["../text/ulysses.txt", "../text/war_and_peace.txt", "../text/shakespeare.txt"]
+texts = ["../text/ulysses.csv", "../text/war_and_peace.csv", "../text/shakespeare.csv"]
 encoding = "utf-8"
 
 for text in texts:
