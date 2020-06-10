@@ -1,0 +1,6 @@
+psycopg2
+tqdm
+nltk
+presto-python-client
+pandas
+MySQLdb

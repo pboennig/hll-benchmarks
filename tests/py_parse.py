@@ -7,3 +7,6 @@ with open(sys.argv[1], "r") as f:
         uniq.update(tok)
 
 print(len(uniq))
+
+for i in sorted(list(uniq)):
+    print(i)

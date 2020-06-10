@@ -1,0 +1,3 @@
+How to set the env variable to point to the JSON file containing the key required to auth me into google big query. 
+
+https://cloud.google.com/docs/authentication/getting-started

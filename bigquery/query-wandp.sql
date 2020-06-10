@@ -1,0 +1,1 @@
+SELECT COUNT(*) FROM (SELECT DISTINCT words FROM wandp) AS temp
