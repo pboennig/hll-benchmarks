@@ -47,7 +47,6 @@ for i in range(len(texts)):
         command = ["go", "run", go_path, str(m), f]
         error, t = acc_test.acc_test(command,gt[f])
         res[i][m - M_MIN] = abs(error), t
-plot_results(res, texts)
-    
+np.save("go_plots/go_plots.npy", res)
 
 
