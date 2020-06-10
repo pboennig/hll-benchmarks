@@ -4,8 +4,9 @@ import time
 
 texts = ["../text/ulysses.csv", "../text/war_and_peace.csv"]
 encoding = "utf-8"
-script_path = os.path.join(os.path.dirname(__file__), "../redis-hll/redis-hll.py")
+redis_path = os.path.join(os.path.dirname(__file__), "../redis-hll/redis-hll.py")
 go_path = os.path.join(os.path.dirname(__file__), "../go-hll/go-hll.go")
+py_path = os.path.join(os.path.dirname(__file__), "../python-hll/python-hll-simple.py")
 
 '''
 For a given list of text paths, counts the number of total and unique tokens in the file.
@@ -36,7 +37,7 @@ def acc_test(command, txt_path, lengths, card):
     print("Testing file {} with {} tokens ({} unique)".format(file_name, lengths[txt_path], card))
     print("-"*20)
     t0 = time.time()
-    estimator = subprocess.Popen(command, stdout=subprocess.PIPE)
+    estimator = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     guess = estimator.communicate()[0].decode(encoding).rstrip()
     t1 = time.time()
     print("Error: {:.2%}".format(int(guess) / card - 1))
@@ -51,7 +52,7 @@ def test_redis(gt, lengths):
     print("{}".format('='*20))
     redis = subprocess.Popen("redis-server", stdout=subprocess.PIPE)
     for txt_path, card in gt.items(): 
-        command = ["python3", script_path, txt_path]
+        command = ["python3", redis_path, txt_path]
         acc_test(command, txt_path, lengths, card)
 
     redis.kill()
@@ -71,7 +72,15 @@ def test_go(gt, lengths) :
             acc_test(command, txt_path, lengths, card)
         print("")
 
+def test_py(gt, lengths) :
+    print("Testing Python...")
+    print("{}".format('='*20))
+    for txt_path, card in gt.items(): 
+        command = ["python3", py_path, txt_path, str(13), str(5)] 
+        acc_test(command, txt_path, lengths, card)
+        print("")
 if __name__=="__main__":
     gt, lengths = parse_files(texts)
-    test_redis(gt, lengths)
-    test_go(gt, lengths)
+    #test_redis(gt, lengths)
+    #test_go(gt, lengths)
+    test_py(gt, lengths)
