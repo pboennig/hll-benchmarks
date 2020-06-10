@@ -32,55 +32,43 @@ def parse_files(texts):
 Runs accuracy test for a given command by spinning up a subprocess, capturing the output,
 and comparing it to the ground truth cardinality.
 '''
-def acc_test(command, txt_path, lengths, card):
-    file_name = os.path.split(txt_path)[-1]
-    print("Testing file {} with {} tokens ({} unique)".format(file_name, lengths[txt_path], card))
-    print("-"*20)
+def acc_test(command, card):
     t0 = time.time()
     estimator = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     guess = estimator.communicate()[0].decode(encoding).rstrip()
     t1 = time.time()
-    print("Error: {:.2%}".format(int(guess) / card - 1))
-    print("Took {:.2f} seconds".format(t1-t0))
-    print("")
+
+    error = "Error: {:.2%}".format(int(guess) / card - 1)
+    t = "Time: {:.2f} seconds".format(t1-t0)
+    return error + "\t" + t
 
 '''
 Runs acc_test for Redis, spinning up and killing redis-server as necessary.
 '''
-def test_redis(gt, lengths):
-    print("Testing Redis....")
-    print("{}".format('='*20))
+def test_redis(txt_path, gt):
     redis = subprocess.Popen("redis-server", stdout=subprocess.PIPE)
-    for txt_path, card in gt.items(): 
-        command = ["python3", redis_path, txt_path]
-        acc_test(command, txt_path, lengths, card)
-
+    command = ["python3", redis_path, txt_path]
+    print("Redis:\t {}".format(acc_test(command, gt[txt_path])))
     redis.kill()
-    print("")
 
 '''
 Runs acc_test for Go, iterating over possible bucket sizes to test
 hyperparamter response.
 '''
-def test_go(gt, lengths) :
-    print("Testing Go...")
-    print("{}".format('='*20))
-    for m in range(6, 14, 2):
-        print("With {} buckets:".format(m))
-        for txt_path, card in gt.items(): 
-            command = ["go", "run", go_path, str(m), txt_path]
-            acc_test(command, txt_path, lengths, card)
-        print("")
+def test_go(txt_path, gt):
+    command = ["go", "run", go_path, str(10), txt_path]
+    print("Go:\t {}".format(acc_test(command, gt[txt_path])))
 
-def test_py(gt, lengths) :
-    print("Testing Python...")
-    print("{}".format('='*20))
-    for txt_path, card in gt.items(): 
-        command = ["python3", py_path, txt_path, str(13), str(5)] 
-        acc_test(command, txt_path, lengths, card)
-        print("")
+def test_py(txt_path, gt):
+    command = ["python3", py_path, txt_path, str(13), str(5)] 
+    print("Python:\t {}".format(acc_test(command, gt[txt_path])))
+
 if __name__=="__main__":
     gt, lengths = parse_files(texts)
-    #test_redis(gt, lengths)
-    #test_go(gt, lengths)
-    test_py(gt, lengths)
+    for text in gt.keys():
+        print("Testing file {} with {} tokens ({} unique)".format(text, lengths[text], gt[text]))
+        print("-"*20)
+        test_redis(text, gt)
+        test_go(text, gt)
+        test_py(text, gt)
+        print("")
