@@ -37,10 +37,12 @@ def acc_test(command, card):
     estimator = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     guess = estimator.communicate()[0].decode(encoding).rstrip()
     t1 = time.time()
+    error = int(guess) / card - 1
+    t = t1-t0
+    return error, t
 
-    error = "Error: {:.2%}".format(int(guess) / card - 1)
-    t = "Time: {:.2f} seconds".format(t1-t0)
-    return error + "\t" + t
+def print_acc_test(prog, error, t):
+    print("{}:\t".format(prog) + "Error: {:.2%}".format(error) + "\t" + "Time: {:.2f} seconds".format(t))
 
 '''
 Runs acc_test for Redis, spinning up and killing redis-server as necessary.
@@ -48,7 +50,8 @@ Runs acc_test for Redis, spinning up and killing redis-server as necessary.
 def test_redis(txt_path, gt):
     redis = subprocess.Popen("redis-server", stdout=subprocess.PIPE)
     command = ["python3", redis_path, txt_path]
-    print("Redis:\t {}".format(acc_test(command, gt[txt_path])))
+    error, t = acc_test(command, gt[txt_path])
+    print_acc_test("Redis", error, t)
     redis.kill()
 
 '''
@@ -57,11 +60,13 @@ hyperparamter response.
 '''
 def test_go(txt_path, gt):
     command = ["go", "run", go_path, str(10), txt_path]
-    print("Go:\t {}".format(acc_test(command, gt[txt_path])))
+    error, t = acc_test(command, gt[txt_path])
+    print_acc_test("Go", error, t)
 
 def test_py(txt_path, gt):
     command = ["python3", py_path, txt_path, str(13), str(5)] 
-    print("Python:\t {}".format(acc_test(command, gt[txt_path])))
+    error, t = acc_test(command, gt[txt_path])
+    print_acc_test("Python", error, t)
 
 if __name__=="__main__":
     gt, lengths = parse_files(texts)
