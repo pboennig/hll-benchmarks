@@ -7,6 +7,8 @@ import time
 import pickle
 from tqdm import trange
 verbose = False
+kMinPrecision = 10
+kMaxPrecision = 25
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/Surya/Surya/School/CS166/Project/key_files/surya-bigquery-project-editable-key.json"
 
 #Housekeeping Data Structures
@@ -34,117 +36,54 @@ APPROX_QUERY_TEMPLATE = 'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0,
 def calc_pct_diff(approx_count, exact_count):
     return round(((approx_count - exact_count) / exact_count) * 100, 2)
 
-print('############################## WAR AND PEACE #################################')
-
-# Exact Count.
-
-start = time.perf_counter()
-client = bigquery.Client()
-QUERY = (EXACT_QUERY_TEMPLATE % 'war_and_peace')
-query_job = client.query(QUERY)  # API request
-rows = query_job.result()  # Waits for query to finish
-
-for row in rows:
-    print("exact count", row.get('exact_count'))
-    exact_count = row.get('exact_count')
-
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for War and Peace", time_taken)
-
-
-# Approximate Count.
-
-for precision in trange(10, 25):
+def query_exact_count(database_name):
     start = time.perf_counter()
-    i = precision
-    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'war_and_peace'))
     client = bigquery.Client()
+    QUERY = (EXACT_QUERY_TEMPLATE % database_name)
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-
     for row in rows:        
-        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
-        pct_diff_war_and_peace.append(pct_diff)        
-        hll_estimate_war_and_peace.append(row.get('approx_count'))        
-        if verbose:
-            print("approx count with precision level, %d" % i, row.get('approx_count'))
-            print("%% difference with precision level, %d" % i, pct_diff)        
-        time_taken = time.perf_counter() - start
-        time_war_and_peace.append(time_taken)
-        
-        if verbose:
-            print("Time taken for this query", time_taken)
-        
-        
-print('############################## SHAKESPEARE #################################')
+        exact_count = row.get('exact_count')
+    time_taken = time.perf_counter() - start
+    if verbose:
+        print("Time taken to compute exact count for %s" % database_name, time_taken)
+        print("exact count", exact_count)
 
+def query_approximate_count(database_name, estimate_arr, times_arr):
+    for i in trange(kMinPrecision, kMaxPrecision):
+        start = time.perf_counter()
+        QUERY = (APPROX_QUERY_TEMPLATE % (i, database_name))
+        client = bigquery.Client() #for timing purposes
+        query_job = client.query(QUERY)  # API request
+        rows = query_job.result()  # Waits for query to finish
+        for row in rows:        
+            approx_count = row.get('approx_count')
+            estimate_arr.append(approx_count)        
+            if verbose:
+                print("approx count with precision level, %d" % i, approx_count)      
+            time_taken = time.perf_counter() - start
+            times_arr.append(time_taken)            
+            if verbose:
+                print("Time taken for this query", time_taken)
+    
 
+print(10 * '=' + 'WAR AND PEACE' + 10 * '=')
 # Exact Count.
-start = time.perf_counter()
-client = bigquery.Client()
-QUERY = (EXACT_QUERY_TEMPLATE % 'shakespeare')        
-query_job = client.query(QUERY)  # API request
-rows = query_job.result()  # Waits for query to finish
-for row in rows:
-    print("exact count", row.get('exact_count'))
-    exact_count = row.get('exact_count')
-
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for Shakespeare", time_taken)
-
+query_exact_count('war_and_peace')
 # Approximate Count.
-
-for i in trange(10, 25):
-    start = time.perf_counter()
-    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'shakespeare'))
-    client = bigquery.Client() #for fair and consistent timing purposes
-    query_job = client.query(QUERY)  # API request
-    rows = query_job.result()  # Waits for query to finish
-    for row in rows:        
-        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
-        pct_diff_shakespeare.append(pct_diff)                
-        hll_estimate_shakespeare.append(row.get('approx_count'))      
-        if verbose:  
-            print("approx count with precision level, %d" % i, row.get('approx_count'))
-            print("%% difference with precision level, %d" % i, pct_diff)
-        time_taken = time.perf_counter() - start
-        time_shakespeare.append(time_taken)
-        if verbose:
-            print("Time taken for this query", time_taken)    
-
-print('############################## ULYSSES #################################')
-
+query_approximate_count('war_and_peace', hll_estimate_war_and_peace, time_war_and_peace)      
+        
+print(10 * '=' + 'SHAKESPEARE' + 10 * '=')
 # Exact Count.
-start = time.perf_counter()
-QUERY = (EXACT_QUERY_TEMPLATE % 'ulysses')        
-client = bigquery.Client()
-query_job = client.query(QUERY)  # API request
-rows = query_job.result()  # Waits for query to finish
-for row in rows:
-    print("exact count", row.get('exact_count'))
-    exact_count = row.get('exact_count')
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for Ulysses", time_taken)
-
+query_exact_count('shakespeare')
 # Approximate Count.
+query_approximate_count('shakespeare', hll_estimate_shakespeare, time_shakespeare)      
 
-for i in trange(10, 25):
-    start = time.perf_counter()
-    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'ulysses'))
-    client = bigquery.Client() #repeating for timing purposes
-    query_job = client.query(QUERY)  # API request
-    rows = query_job.result()  # Waits for query to finish
-    for row in rows:        
-        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
-        pct_diff_ulysses.append(pct_diff)                
-        hll_estimate_ulysses.append(row.get('approx_count'))
-        if verbose:
-            print("approx count with precision level, %d" % i, row.get('approx_count'))
-            print("%% difference with precision level, %d" % i, pct_diff)
-        time_taken = time.perf_counter() - start
-        time_ulysses.append(time_taken)
-        if verbose:
-            print("Time taken for this query", time_taken)    
+print(10 * '=' + 'ULYSSES' + 10 * '=')
+# Exact Count.
+query_exact_count('ulysses')
+# Approximate Count.
+query_approximate_count('ulysses', hll_estimate_ulysses, time_ulysses)      
 
 ################################# PLOTTING ###############################
 
