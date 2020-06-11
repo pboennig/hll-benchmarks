@@ -2,11 +2,12 @@ import shlex, subprocess
 import os
 import time
 
-texts = ["../text/ulysses.csv", "../text/war_and_peace.csv"]
+texts = ["../text/ulysses.csv", "../text/war_and_peace.csv", "../text/shakespeare.csv"]
 encoding = "utf-8"
 redis_path = os.path.join(os.path.dirname(__file__), "../redis-hll/redis-hll.py")
 go_path = os.path.join(os.path.dirname(__file__), "../go-hll/go-hll.go")
 py_path = os.path.join(os.path.dirname(__file__), "../python-hll/python-hll-simple.py")
+bq_path = os.path.join(os.path.dirname(__file__), "../bigquery/bigquery-simple.py")
 
 '''
 For a given list of text paths, counts the number of total and unique tokens in the file.
@@ -81,6 +82,11 @@ def test_py(txt_path, gt):
     error, t = acc_test(command, gt[txt_path])
     print_acc_test("Python", error, t)
 
+def test_bq(txt_path, gt):
+    command = ["python3", bq_path, str(15), txt_path]
+    error, t = acc_test(command, gt[txt_path])
+    print_acc_test("BigQuery", error, t)
+
 if __name__=="__main__":
     gt, lengths = parse_files(texts)
     for text in gt.keys():
@@ -89,4 +95,5 @@ if __name__=="__main__":
         test_redis(text, gt)
         test_go(text, gt)
         test_py(text, gt)
+        test_bq(text, gt)
         print("")
