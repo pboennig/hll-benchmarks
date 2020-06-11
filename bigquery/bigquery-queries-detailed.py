@@ -166,7 +166,7 @@ plt.scatter(x = range(10, 25),  y = time_shakespeare, label = 'Shakespeare')
 plt.scatter(x = range(10, 25),  y = time_ulysses, label = 'Ulysses')
 plt.scatter(x = range(10, 25),  y = time_war_and_peace, label = 'War and Peace')
 plt.xlabel('Level of Precision (higher is better)')
-plt.ylabel('Time taken Per Query (higher is better)')
+plt.ylabel('Time taken Per Query')
 plt.legend()
 plt.savefig('bigquery-timing.png')
 
