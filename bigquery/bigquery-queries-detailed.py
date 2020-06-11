@@ -9,145 +9,162 @@ from tqdm import trange
 verbose = False
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/Surya/Surya/School/CS166/Project/key_files/surya-bigquery-project-editable-key.json"
 
-client = bigquery.Client()
-
-print('############################## WAR AND PEACE #################################')
-# Exact Count.
-
+#Housekeeping Data Structures
 pct_diff_war_and_peace = []
 hll_estimate_war_and_peace = []
 time_war_and_peace = []
-
-QUERY = (
-    'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.war_and_peace \
-        WHERE RAND() < 2  ')
-
-start = time.perf_counter()
-query_job = client.query(QUERY)  # API request
-rows = query_job.result()  # Waits for query to finish
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for War and Peace", time_taken)
-
-for row in rows:
-    print("exact count", row.get('exact_count'))
-    exact_count = row.get('exact_count')
-
-# Approximate Count.
-
-for precision in trange(10, 25):
-    i = precision
-
-    QUERY = (
-        'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.war_and_peace WHERE RAND() < 2  ' % i) 
-    
-    start = time.perf_counter()
-    query_job = client.query(QUERY)  # API request
-    rows = query_job.result()  # Waits for query to finish
-    time_taken = time.perf_counter() - start
-
-    for row in rows:
-        
-        pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
-        pct_diff_war_and_peace.append(pct_diff)
-        time_war_and_peace.append(time_taken)
-        hll_estimate_war_and_peace.append(row.get('approx_count'))
-        if verbose:
-            print("approx count with precision level, %d" % i, row.get('approx_count'))
-            print("%% difference with precision level, %d" % i, pct_diff)
-            print("Time taken for this query", time_taken)
-        
-        
-
-print('############################## SHAKESPEARE #################################')
 
 pct_diff_shakespeare = []
 hll_estimate_shakespeare = []
 time_shakespeare = []
 
+
+pct_diff_ulysses = []
+hll_estimate_ulysses = []
+time_ulysses = []
+
+
+EXACT_QUERY_TEMPLATE = 'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
+        FROM cs166.%s \
+        WHERE RAND() < 2 '
+
+print('############################## WAR AND PEACE #################################')
+
 # Exact Count.
-QUERY = (
-    'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.shakespeare WHERE RAND() < 2  ')
+
 start = time.perf_counter()
+client = bigquery.Client()
+QUERY = (EXACT_QUERY_TEMPLATE % 'war_and_peace')
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for Shakespeare", time_taken)
 
 for row in rows:
     print("exact count", row.get('exact_count'))
     exact_count = row.get('exact_count')
 
+time_taken = time.perf_counter() - start
+print("Time taken to compute exact count for War and Peace", time_taken)
+
+
 # Approximate Count.
 
 for precision in trange(10, 25):
+    start = time.perf_counter()
+    i = precision
+    QUERY = (
+        'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
+            as approx_count FROM cs166.war_and_peace WHERE RAND() < 2  ' % i) 
+    client = bigquery.Client()
+    query_job = client.query(QUERY)  # API request
+    rows = query_job.result()  # Waits for query to finish
+
+    for row in rows:
+        
+        pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
+        pct_diff_war_and_peace.append(pct_diff)        
+        hll_estimate_war_and_peace.append(row.get('approx_count'))        
+        if verbose:
+            print("approx count with precision level, %d" % i, row.get('approx_count'))
+            print("%% difference with precision level, %d" % i, pct_diff)
+        
+        time_taken = time.perf_counter() - start
+        time_war_and_peace.append(time_taken)
+        
+        if verbose:
+            print("Time taken for this query", time_taken)
+        
+        
+print('############################## SHAKESPEARE #################################')
+
+
+# Exact Count.
+start = time.perf_counter()
+client = bigquery.Client()
+QUERY = (EXACT_QUERY_TEMPLATE % 'shakespeare')        
+query_job = client.query(QUERY)  # API request
+rows = query_job.result()  # Waits for query to finish
+
+for row in rows:
+    print("exact count", row.get('exact_count'))
+    exact_count = row.get('exact_count')
+
+time_taken = time.perf_counter() - start
+print("Time taken to compute exact count for Shakespeare", time_taken)
+
+# Approximate Count.
+
+for precision in trange(10, 25):
+    
+    start = time.perf_counter()
+
     i = precision
     
     QUERY = (
         'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
             as approx_count FROM cs166.shakespeare WHERE RAND() < 2  ' % i) 
     
-    start = time.perf_counter()
+    client = bigquery.Client()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    time_taken = time.perf_counter() - start
-
+    
     for row in rows:
         
         pct_diff = round(((row.get('approx_count') - exact_count) / exact_count) * 100, 2)
-        pct_diff_shakespeare.append(pct_diff)        
-        time_shakespeare.append(time_taken)
+        pct_diff_shakespeare.append(pct_diff)                
         hll_estimate_shakespeare.append(row.get('approx_count'))      
+
         if verbose:  
             print("approx count with precision level, %d" % i, row.get('approx_count'))
             print("%% difference with precision level, %d" % i, pct_diff)
+
+        time_taken = time.perf_counter() - start
+        time_shakespeare.append(time_taken)
+        if verbose:
             print("Time taken for this query", time_taken)    
 
 print('############################## ULYSSES #################################')
 
-pct_diff_ulysses = []
-hll_estimate_ulysses = []
-time_ulysses = []
-
 # Exact Count.
-QUERY = (
-    'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.ulysses WHERE RAND() < 2  ')
-
 start = time.perf_counter()
+
+QUERY = (EXACT_QUERY_TEMPLATE % 'ulysses')        
+client = bigquery.Client()
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-time_taken = time.perf_counter() - start
-print("Time taken to compute exact count for Ulysses", time_taken)
 
 for row in rows:
     print("exact count", row.get('exact_count'))
     exact_count = row.get('exact_count')
 
+time_taken = time.perf_counter() - start
+print("Time taken to compute exact count for Ulysses", time_taken)
+
 # Approximate Count.
 
 for precision in trange(10, 25):
+    start = time.perf_counter()
+
     i = precision
 
     QUERY = (
         'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
             as approx_count FROM cs166.ulysses WHERE RAND() < 2  ' % i) 
 
-    start = time.perf_counter()
+    client = bigquery.Client()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    time_taken = time.perf_counter() - start
-
+    
     for row in rows:        
         pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
-        pct_diff_ulysses.append(pct_diff)        
-        time_ulysses.append(time_taken)
+        pct_diff_ulysses.append(pct_diff)                
         hll_estimate_ulysses.append(row.get('approx_count'))
         if verbose:
             print("approx count with precision level, %d" % i, row.get('approx_count'))
             print("%% difference with precision level, %d" % i, pct_diff)
+        
+        time_taken = time.perf_counter() - start
+        time_ulysses.append(time_taken)
+        if verbose:
             print("Time taken for this query", time_taken)    
 
 ################################# PLOTTING ###############################
