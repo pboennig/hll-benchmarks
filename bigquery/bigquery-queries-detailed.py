@@ -1,10 +1,12 @@
 from google.cloud import bigquery
 from urllib.error import HTTPError
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 import time
-
-
+import pickle
+from tqdm import trange
+verbose = False
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/Surya/Surya/School/CS166/Project/key_files/surya-bigquery-project-editable-key.json"
 
 client = bigquery.Client()
@@ -13,7 +15,7 @@ print('############################## WAR AND PEACE ############################
 # Exact Count.
 
 pct_diff_war_and_peace = []
-
+hll_estimate_war_and_peace = []
 time_war_and_peace = []
 
 QUERY = (
@@ -32,7 +34,7 @@ for row in rows:
 
 # Approximate Count.
 
-for precision in range(10, 25):
+for precision in trange(10, 25):
     i = precision
 
     QUERY = (
@@ -45,18 +47,22 @@ for precision in range(10, 25):
     time_taken = time.process_time() - start
 
     for row in rows:
-        print("approx count with precision level, %d" % i, row.get('approx_count'))
+        
         pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
         pct_diff_war_and_peace.append(pct_diff)
-        print("%% difference with precision level, %d" % i, pct_diff)
-        print("Time taken for this query", time_taken)
         time_war_and_peace.append(time_taken)
+        hll_estimate_war_and_peace.append(row.get('approx_count'))
+        if verbose:
+            print("approx count with precision level, %d" % i, row.get('approx_count'))
+            print("%% difference with precision level, %d" % i, pct_diff)
+            print("Time taken for this query", time_taken)
+        
         
 
 print('############################## SHAKESPEARE #################################')
 
 pct_diff_shakespeare = []
-
+hll_estimate_shakespeare = []
 time_shakespeare = []
 
 # Exact Count.
@@ -75,7 +81,7 @@ for row in rows:
 
 # Approximate Count.
 
-for precision in range(10, 25):
+for precision in trange(10, 25):
     i = precision
     
     QUERY = (
@@ -88,16 +94,20 @@ for precision in range(10, 25):
     time_taken = time.process_time() - start
 
     for row in rows:
-        print("approx count with precision level, %d" % i, row.get('approx_count'))
+        
         pct_diff = round(((row.get('approx_count') - exact_count) / exact_count) * 100, 2)
-        pct_diff_shakespeare.append(pct_diff)
-        print("%% difference with precision level, %d" % i, pct_diff)
-        print("Time taken for this query", time_taken)    
+        pct_diff_shakespeare.append(pct_diff)        
         time_shakespeare.append(time_taken)
+        hll_estimate_shakespeare.append(row.get('approx_count'))      
+        if verbose:  
+            print("approx count with precision level, %d" % i, row.get('approx_count'))
+            print("%% difference with precision level, %d" % i, pct_diff)
+            print("Time taken for this query", time_taken)    
 
 print('############################## ULYSSES #################################')
 
 pct_diff_ulysses = []
+hll_estimate_ulysses = []
 time_ulysses = []
 
 # Exact Count.
@@ -117,7 +127,7 @@ for row in rows:
 
 # Approximate Count.
 
-for precision in range(10, 25):
+for precision in trange(10, 25):
     i = precision
 
     QUERY = (
@@ -129,14 +139,15 @@ for precision in range(10, 25):
     rows = query_job.result()  # Waits for query to finish
     time_taken = time.process_time() - start
 
-    for row in rows:
-        print("approx count with precision level, %d" % i, row.get('approx_count'))
+    for row in rows:        
         pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
-        pct_diff_ulysses.append(pct_diff)
-        print("%% difference with precision level, %d" % i, pct_diff)
-        print("Time taken for this query", time_taken)    
+        pct_diff_ulysses.append(pct_diff)        
         time_ulysses.append(time_taken)
-
+        hll_estimate_ulysses.append(row.get('approx_count'))
+        if verbose:
+            print("approx count with precision level, %d" % i, row.get('approx_count'))
+            print("%% difference with precision level, %d" % i, pct_diff)
+            print("Time taken for this query", time_taken)    
 
 ################################# PLOTTING ###############################
 
@@ -150,8 +161,6 @@ for precision in range(10, 25):
 # plt.savefig('one-run-accuracy vs precision hyperparam.png')
 
 
-
-
 plt.scatter(x = range(10, 25),  y = time_shakespeare, label = 'Shakespeare')
 plt.scatter(x = range(10, 25),  y = time_ulysses, label = 'Ulysses')
 plt.scatter(x = range(10, 25),  y = time_war_and_peace, label = 'War and Peace')
@@ -160,4 +169,17 @@ plt.ylabel('Time taken Per Query (higher is better)')
 plt.legend()
 plt.savefig('bigquery-timing.png')
 
+################################# PICKLING ###############################
+
+hll_estimates = np.array([hll_estimate_shakespeare, hll_estimate_ulysses, hll_estimate_war_and_peace])
+print(hll_estimates)
+pickle_out = open("hll_estimates(Shakespeare, Ulysses, WandP).pickle","wb")
+pickle.dump(hll_estimates, pickle_out)
+pickle_out.close()
+
+hll_times = np.array([time_shakespeare, time_ulysses, time_war_and_peace])
+print(hll_times)
+pickle_out = open("hll_times(Shakespeare, Ulysses, WandP).pickle","wb")
+pickle.dump(hll_times, pickle_out)
+pickle_out.close()
 

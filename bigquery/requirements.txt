@@ -4,3 +4,10 @@ nltk
 presto-python-client
 pandas
 MySQLdb
+google.cloud
+urllib
+numpy
+matplotlib
+os
+time
+pickle
