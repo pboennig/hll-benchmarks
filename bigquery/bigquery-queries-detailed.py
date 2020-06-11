@@ -29,6 +29,11 @@ EXACT_QUERY_TEMPLATE = 'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
         WHERE RAND() < 2 '
 APPROX_QUERY_TEMPLATE = 'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
             as approx_count FROM cs166.%s WHERE RAND() < 2  '
+
+
+def calc_pct_diff(approx_count, exact_count):
+    return round(((approx_count - exact_count) / exact_count) * 100, 2)
+
 print('############################## WAR AND PEACE #################################')
 
 # Exact Count.
@@ -57,15 +62,13 @@ for precision in trange(10, 25):
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
 
-    for row in rows:
-        
-        pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
+    for row in rows:        
+        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
         pct_diff_war_and_peace.append(pct_diff)        
         hll_estimate_war_and_peace.append(row.get('approx_count'))        
         if verbose:
             print("approx count with precision level, %d" % i, row.get('approx_count'))
-            print("%% difference with precision level, %d" % i, pct_diff)
-        
+            print("%% difference with precision level, %d" % i, pct_diff)        
         time_taken = time.perf_counter() - start
         time_war_and_peace.append(time_taken)
         
@@ -82,7 +85,6 @@ client = bigquery.Client()
 QUERY = (EXACT_QUERY_TEMPLATE % 'shakespeare')        
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-
 for row in rows:
     print("exact count", row.get('exact_count'))
     exact_count = row.get('exact_count')
@@ -92,30 +94,19 @@ print("Time taken to compute exact count for Shakespeare", time_taken)
 
 # Approximate Count.
 
-for precision in trange(10, 25):
-    
+for i in trange(10, 25):
     start = time.perf_counter()
-
-    i = precision
-    
-    QUERY = (
-        'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.shakespeare WHERE RAND() < 2  ' % i) 
-    
-    client = bigquery.Client()
+    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'shakespeare'))
+    client = bigquery.Client() #for fair and consistent timing purposes
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    
-    for row in rows:
-        
-        pct_diff = round(((row.get('approx_count') - exact_count) / exact_count) * 100, 2)
+    for row in rows:        
+        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
         pct_diff_shakespeare.append(pct_diff)                
         hll_estimate_shakespeare.append(row.get('approx_count'))      
-
         if verbose:  
             print("approx count with precision level, %d" % i, row.get('approx_count'))
             print("%% difference with precision level, %d" % i, pct_diff)
-
         time_taken = time.perf_counter() - start
         time_shakespeare.append(time_taken)
         if verbose:
@@ -125,42 +116,31 @@ print('############################## ULYSSES #################################'
 
 # Exact Count.
 start = time.perf_counter()
-
 QUERY = (EXACT_QUERY_TEMPLATE % 'ulysses')        
 client = bigquery.Client()
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-
 for row in rows:
     print("exact count", row.get('exact_count'))
     exact_count = row.get('exact_count')
-
 time_taken = time.perf_counter() - start
 print("Time taken to compute exact count for Ulysses", time_taken)
 
 # Approximate Count.
 
-for precision in trange(10, 25):
+for i in trange(10, 25):
     start = time.perf_counter()
-
-    i = precision
-
-    QUERY = (
-        'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.ulysses WHERE RAND() < 2  ' % i) 
-
-    client = bigquery.Client()
+    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'ulysses'))
+    client = bigquery.Client() #repeating for timing purposes
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    
     for row in rows:        
-        pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
+        pct_diff = calc_pct_diff(row.get('approx_count'), exact_count)
         pct_diff_ulysses.append(pct_diff)                
         hll_estimate_ulysses.append(row.get('approx_count'))
         if verbose:
             print("approx count with precision level, %d" % i, row.get('approx_count'))
             print("%% difference with precision level, %d" % i, pct_diff)
-        
         time_taken = time.perf_counter() - start
         time_ulysses.append(time_taken)
         if verbose:
