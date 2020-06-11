@@ -27,7 +27,8 @@ time_ulysses = []
 EXACT_QUERY_TEMPLATE = 'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
         FROM cs166.%s \
         WHERE RAND() < 2 '
-
+APPROX_QUERY_TEMPLATE = 'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
+            as approx_count FROM cs166.%s WHERE RAND() < 2  '
 print('############################## WAR AND PEACE #################################')
 
 # Exact Count.
@@ -51,9 +52,7 @@ print("Time taken to compute exact count for War and Peace", time_taken)
 for precision in trange(10, 25):
     start = time.perf_counter()
     i = precision
-    QUERY = (
-        'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.war_and_peace WHERE RAND() < 2  ' % i) 
+    QUERY = (APPROX_QUERY_TEMPLATE % (i, 'war_and_peace'))
     client = bigquery.Client()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
