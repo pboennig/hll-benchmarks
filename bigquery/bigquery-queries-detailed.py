@@ -20,12 +20,13 @@ time_war_and_peace = []
 
 QUERY = (
     'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.war_and_peace')
+        FROM cs166.war_and_peace \
+        WHERE RAND() < 2  ')
 
-start = time.process_time()
+start = time.perf_counter()
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-time_taken = time.process_time() - start
+time_taken = time.perf_counter() - start
 print("Time taken to compute exact count for War and Peace", time_taken)
 
 for row in rows:
@@ -39,12 +40,12 @@ for precision in trange(10, 25):
 
     QUERY = (
         'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.war_and_peace' % i) 
+            as approx_count FROM cs166.war_and_peace WHERE RAND() < 2  ' % i) 
     
-    start = time.process_time()
+    start = time.perf_counter()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    time_taken = time.process_time() - start
+    time_taken = time.perf_counter() - start
 
     for row in rows:
         
@@ -68,11 +69,11 @@ time_shakespeare = []
 # Exact Count.
 QUERY = (
     'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.shakespeare')
-start = time.process_time()
+        FROM cs166.shakespeare WHERE RAND() < 2  ')
+start = time.perf_counter()
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-time_taken = time.process_time() - start
+time_taken = time.perf_counter() - start
 print("Time taken to compute exact count for Shakespeare", time_taken)
 
 for row in rows:
@@ -86,12 +87,12 @@ for precision in trange(10, 25):
     
     QUERY = (
         'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.shakespeare' % i) 
+            as approx_count FROM cs166.shakespeare WHERE RAND() < 2  ' % i) 
     
-    start = time.process_time()
+    start = time.perf_counter()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    time_taken = time.process_time() - start
+    time_taken = time.perf_counter() - start
 
     for row in rows:
         
@@ -113,12 +114,12 @@ time_ulysses = []
 # Exact Count.
 QUERY = (
     'SELECT COUNT(DISTINCT string_field_0) as exact_count  \
-        FROM cs166.ulysses')
+        FROM cs166.ulysses WHERE RAND() < 2  ')
 
-start = time.process_time()
+start = time.perf_counter()
 query_job = client.query(QUERY)  # API request
 rows = query_job.result()  # Waits for query to finish
-time_taken = time.process_time() - start
+time_taken = time.perf_counter() - start
 print("Time taken to compute exact count for Ulysses", time_taken)
 
 for row in rows:
@@ -132,12 +133,12 @@ for precision in trange(10, 25):
 
     QUERY = (
         'SELECT HLL_COUNT.EXTRACT(HLL_COUNT.INIT(string_field_0, %d))\
-            as approx_count FROM cs166.ulysses' % i) 
+            as approx_count FROM cs166.ulysses WHERE RAND() < 2  ' % i) 
 
-    start = time.process_time()
+    start = time.perf_counter()
     query_job = client.query(QUERY)  # API request
     rows = query_job.result()  # Waits for query to finish
-    time_taken = time.process_time() - start
+    time_taken = time.perf_counter() - start
 
     for row in rows:        
         pct_diff = round((((row.get('approx_count')) - exact_count) / exact_count) * 100, 2)
