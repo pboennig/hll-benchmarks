@@ -172,14 +172,17 @@ plt.savefig('bigquery-timing.png')
 ################################# PICKLING ###############################
 
 hll_estimates = np.array([hll_estimate_shakespeare, hll_estimate_ulysses, hll_estimate_war_and_peace])
-print(hll_estimates)
+
 pickle_out = open("hll_estimates(Shakespeare, Ulysses, WandP).pickle","wb")
 pickle.dump(hll_estimates, pickle_out)
 pickle_out.close()
 
 hll_times = np.array([time_shakespeare, time_ulysses, time_war_and_peace])
-print(hll_times)
+
 pickle_out = open("hll_times(Shakespeare, Ulysses, WandP).pickle","wb")
 pickle.dump(hll_times, pickle_out)
 pickle_out.close()
 
+pickle_out = open("Precision_in_Range.pickle","wb")
+pickle.dump(list(range(10, 25)), pickle_out)
+pickle_out.close()
