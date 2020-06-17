@@ -1,7 +1,12 @@
+'''
+1. Connects to redis server (must be a separate process running)
+2. for each file in argv, places all tokens in "hll" object for redis
+3. prints out HyperLogLog cardinality estimate
+'''
+
 import redis
 import sys
 import argparse
-import nltk
 
 parser = argparse.ArgumentParser(description='Estimate unique words in text file(s)')
 parser.add_argument('files', metavar='F', type=str, nargs='+', help="list of files")

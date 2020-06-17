@@ -1,3 +1,7 @@
+/* File: go-hll.go
+ * Script that estimates cardinality of a file. Reads tokens from argv[2] and enters
+ * them into an estimator with precision parameter argv[1]. Prints out estimate. 
+ */
 package main
 
 import ("fmt"

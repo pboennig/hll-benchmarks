@@ -1,1 +1,3 @@
-CS166 final project comparing different implementations of the HyperLogLog cardinality estimator.
+# CS166 hll-benchmarks
+
+Tests Redis, BigQuery, Python, and Go implementations of the HyperLogLog cardinality estimator.
